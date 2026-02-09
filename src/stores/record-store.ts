@@ -41,6 +41,7 @@ interface RecordState {
   // Exercise management
   addExercise: (exercise: { exercise_id: string; name: string }) => void;
   removeExercise: (exerciseClientId: string) => void;
+  reorderExercises: (oldIndex: number, newIndex: number) => void;
 
   // Set management
   addSet: (exerciseClientId: string) => void;
@@ -122,6 +123,14 @@ export const useRecordStore = create<RecordState>()((set) => ({
     set((state) => ({
       exercises: state.exercises.filter((e) => e.id !== exerciseClientId),
     })),
+
+  reorderExercises: (oldIndex, newIndex) =>
+    set((state) => {
+      const exercises = [...state.exercises];
+      const [removed] = exercises.splice(oldIndex, 1);
+      exercises.splice(newIndex, 0, removed);
+      return { exercises };
+    }),
 
   addSet: (exerciseClientId) =>
     set((state) => ({

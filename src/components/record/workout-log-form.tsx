@@ -12,6 +12,16 @@ import { Plus, Save, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Exercise } from '@/lib/db/types';
 import Link from 'next/link';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 interface WorkoutLogFormProps {
   date: string;
@@ -34,7 +44,25 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
     addSet,
     removeSet,
     updateSet,
+    reorderExercises,
   } = useRecordStore();
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = exercises.findIndex((e) => e.id === active.id);
+      const newIndex = exercises.findIndex((e) => e.id === over.id);
+      reorderExercises(oldIndex, newIndex);
+    }
+  };
 
   const handleAddExercises = (selected: Exercise[]) => {
     selected.forEach((ex) => {
@@ -137,16 +165,29 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
       )}
 
       {/* 운동 목록 */}
-      {exercises.map((exercise) => (
-        <ExerciseLogCard
-          key={exercise.id}
-          exercise={exercise}
-          onAddSet={() => addSet(exercise.id)}
-          onRemoveSet={(setId) => removeSet(exercise.id, setId)}
-          onUpdateSet={(setId, data) => updateSet(exercise.id, setId, data)}
-          onRemoveExercise={() => removeExercise(exercise.id)}
-        />
-      ))}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        modifiers={[restrictToVerticalAxis]}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={exercises.map((e) => e.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {exercises.map((exercise) => (
+            <ExerciseLogCard
+              key={exercise.id}
+              id={exercise.id}
+              exercise={exercise}
+              onAddSet={() => addSet(exercise.id)}
+              onRemoveSet={(setId) => removeSet(exercise.id, setId)}
+              onUpdateSet={(setId, data) => updateSet(exercise.id, setId, data)}
+              onRemoveExercise={() => removeExercise(exercise.id)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
 
       {/* 운동 추가 */}
       <Button

@@ -43,6 +43,7 @@ interface WorkoutState {
   nextExercise: () => void;
   previousExercise: () => void;
   setCurrentExerciseIndex: (index: number) => void;
+  reorderExercises: (oldIndex: number, newIndex: number) => void;
   startRestTimer: (seconds: number) => void;
   tickRestTimer: () => void;
   stopRestTimer: () => void;
@@ -101,6 +102,31 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (!state.activeWorkout) return state;
           return {
             activeWorkout: { ...state.activeWorkout, current_exercise_index: index },
+          };
+        }),
+
+      reorderExercises: (oldIndex, newIndex) =>
+        set((state) => {
+          if (!state.activeWorkout) return state;
+          const exercises = [...state.activeWorkout.exercises];
+          const [removed] = exercises.splice(oldIndex, 1);
+          exercises.splice(newIndex, 0, removed);
+          // Adjust current_exercise_index to follow the exercise the user was viewing
+          let newCurrentIndex = state.activeWorkout.current_exercise_index;
+          const currentIdx = state.activeWorkout.current_exercise_index;
+          if (currentIdx === oldIndex) {
+            newCurrentIndex = newIndex;
+          } else if (oldIndex < currentIdx && newIndex >= currentIdx) {
+            newCurrentIndex = currentIdx - 1;
+          } else if (oldIndex > currentIdx && newIndex <= currentIdx) {
+            newCurrentIndex = currentIdx + 1;
+          }
+          return {
+            activeWorkout: {
+              ...state.activeWorkout,
+              exercises,
+              current_exercise_index: newCurrentIndex,
+            },
           };
         }),
 

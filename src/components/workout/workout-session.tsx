@@ -8,11 +8,37 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
   ChevronLeft,
   ChevronRight,
   Dumbbell,
   Timer,
+  ListOrdered,
+  GripVertical,
+  Check,
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { SetInputRow } from './set-input-row';
 import { RestTimer } from './rest-timer';
 import { PreviousRecord } from './previous-record';
@@ -22,6 +48,82 @@ import { cn } from '@/lib/utils';
 interface WorkoutSessionProps {
   sessionId: string;
   onComplete: () => void;
+}
+
+function SortableExerciseItem({
+  exercise,
+  index,
+  isActive,
+  completedSets,
+  targetSets,
+  onSelect,
+}: {
+  exercise: { exercise_id: string; name: string; target_sets: number };
+  index: number;
+  isActive: boolean;
+  completedSets: number;
+  targetSets: number;
+  onSelect: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exercise.exercise_id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const isComplete = completedSets >= targetSets;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex items-center gap-3 p-3 rounded-lg border',
+        isActive && 'border-primary bg-primary/5',
+        isComplete && !isActive && 'bg-muted/50',
+        isDragging && 'shadow-lg'
+      )}
+    >
+      <button
+        type="button"
+        className="touch-none cursor-grab active:cursor-grabbing flex-shrink-0"
+        {...attributes}
+        {...listeners}
+        aria-label="운동 순서 변경"
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </button>
+      <button
+        type="button"
+        className="flex-1 text-left"
+        onClick={onSelect}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-sm text-muted-foreground mr-2">{index + 1}.</span>
+            <span className={cn('font-medium', isActive && 'text-primary')}>
+              {exercise.name}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {completedSets}/{targetSets}세트
+            </span>
+            {isComplete && <Check className="h-4 w-4 text-green-500" />}
+          </div>
+        </div>
+      </button>
+    </div>
+  );
 }
 
 export function WorkoutSession({
@@ -34,9 +136,20 @@ export function WorkoutSession({
     nextExercise,
     previousExercise,
     startRestTimer,
+    reorderExercises,
+    setCurrentExerciseIndex,
   } = useWorkoutStore();
 
   const [completedSetsCount, setCompletedSetsCount] = useState<Record<number, number>>({});
+  const [showReorder, setShowReorder] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   const elapsedSeconds = useElapsedTime(
     activeWorkout?.started_at || new Date().toISOString()
@@ -114,6 +227,19 @@ export function WorkoutSession({
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = activeWorkout!.exercises.findIndex(
+        (e) => e.exercise_id === active.id
+      );
+      const newIndex = activeWorkout!.exercises.findIndex(
+        (e) => e.exercise_id === over.id
+      );
+      reorderExercises(oldIndex, newIndex);
+    }
+  };
+
   const getPreviousSetData = (setNumber: number) => {
     const completedSets = activeWorkout.completed_sets.filter(
       (set) => set.exercise_id === currentExercise.exercise_id
@@ -154,9 +280,56 @@ export function WorkoutSession({
               <span>{formatElapsedTime(elapsedSeconds)}</span>
             </div>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {activeWorkout.current_exercise_index + 1} / {activeWorkout.exercises.length}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {activeWorkout.current_exercise_index + 1} / {activeWorkout.exercises.length}
+            </Badge>
+            <Sheet open={showReorder} onOpenChange={setShowReorder}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <ListOrdered className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[70vh]">
+                <SheetHeader>
+                  <SheetTitle>운동 순서 변경</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 space-y-2 overflow-y-auto max-h-[calc(70vh-8rem)] pb-4">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    modifiers={[restrictToVerticalAxis]}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={activeWorkout.exercises.map((e) => e.exercise_id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {activeWorkout.exercises.map((exercise, index) => {
+                        const completed = activeWorkout.completed_sets.filter(
+                          (s) => s.exercise_id === exercise.exercise_id
+                        ).length;
+                        return (
+                          <SortableExerciseItem
+                            key={exercise.exercise_id}
+                            exercise={exercise}
+                            index={index}
+                            isActive={index === activeWorkout.current_exercise_index}
+                            completedSets={completed}
+                            targetSets={exercise.target_sets}
+                            onSelect={() => {
+                              setCurrentExerciseIndex(index);
+                              setShowReorder(false);
+                            }}
+                          />
+                        );
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
         <Progress value={progress} className="h-2" />
       </Card>

@@ -2,11 +2,14 @@
 
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { SetLogRow } from './set-log-row';
 import type { RecordExercise, RecordSet } from '@/stores/record-store';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ExerciseLogCardProps {
+  id: string;
   exercise: RecordExercise;
   onAddSet: () => void;
   onRemoveSet: (setId: string) => void;
@@ -15,16 +18,41 @@ interface ExerciseLogCardProps {
 }
 
 export function ExerciseLogCard({
+  id,
   exercise,
   onAddSet,
   onRemoveSet,
   onUpdateSet,
   onRemoveExercise,
 }: ExerciseLogCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
   return (
-    <Card>
+    <Card ref={setNodeRef} style={style}>
       <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
-        <div>
+        <button
+          type="button"
+          className="touch-none cursor-grab active:cursor-grabbing flex-shrink-0"
+          {...attributes}
+          {...listeners}
+          aria-label="운동 순서 변경"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </button>
+        <div className="flex-1">
           <div className="font-semibold">{exercise.name}</div>
           <div className="text-xs text-muted-foreground">{exercise.sets.length}세트</div>
         </div>
