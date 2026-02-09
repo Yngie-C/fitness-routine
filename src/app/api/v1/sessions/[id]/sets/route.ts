@@ -6,13 +6,13 @@ import { z } from 'zod/v4';
 import { eq, and } from 'drizzle-orm';
 import { workoutSetSchema } from '@/lib/validations/workout';
 
-// POST /api/v1/sessions/[sessionId]/sets - Add set to session
+// POST /api/v1/sessions/[id]/sets - Add set to session
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ sessionId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { sessionId } = await params;
+    const { id: sessionId } = await params;
     const supabase = await createClient();
     const {
       data: { user },

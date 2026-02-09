@@ -6,13 +6,13 @@ import { z } from 'zod/v4';
 import { eq, and } from 'drizzle-orm';
 import { workoutSetSchema } from '@/lib/validations/workout';
 
-// PATCH /api/v1/sessions/[sessionId]/sets/[id] - Update set
+// PATCH /api/v1/sessions/[id]/sets/[setId] - Update set
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ sessionId: string; id: string }> }
+  { params }: { params: Promise<{ id: string; setId: string }> }
 ) {
   try {
-    const { sessionId, id: setId } = await params;
+    const { id: sessionId, setId } = await params;
     const supabase = await createClient();
     const {
       data: { user },
@@ -82,13 +82,13 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/v1/sessions/[sessionId]/sets/[id] - Delete set
+// DELETE /api/v1/sessions/[id]/sets/[setId] - Delete set
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ sessionId: string; id: string }> }
+  { params }: { params: Promise<{ id: string; setId: string }> }
 ) {
   try {
-    const { sessionId, id: setId } = await params;
+    const { id: sessionId, setId } = await params;
     const supabase = await createClient();
     const {
       data: { user },

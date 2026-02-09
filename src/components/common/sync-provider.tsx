@@ -1,12 +1,18 @@
 'use client';
 
 import { useEffect, useCallback, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useAppStore } from '@/stores/app-store';
 import { processSyncQueue, pullFromServer } from '@/lib/offline/sync-manager';
+
+const AUTH_PATHS = ['/login', '/signup', '/auth'];
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const { setOnline, setSyncing, setSyncError } = useAppStore();
   const syncInProgress = useRef(false);
+  const pathname = usePathname();
+
+  const isAuthPage = AUTH_PATHS.some((p) => pathname?.startsWith(p));
 
   const performSync = useCallback(async () => {
     if (syncInProgress.current) return;
@@ -35,6 +41,9 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       setOnline(navigator.onLine);
     }
+
+    // Skip sync on auth pages
+    if (isAuthPage) return;
 
     // Online event handler
     const handleOnline = () => {
@@ -70,7 +79,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('offline', handleOffline);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [setOnline, performSync]);
+  }, [setOnline, performSync, isAuthPage]);
 
   return <>{children}</>;
 }
