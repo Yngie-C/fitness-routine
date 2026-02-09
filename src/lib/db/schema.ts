@@ -55,6 +55,9 @@ export const routines = pgTable('routines', {
   description: text('description'),
   is_template: boolean('is_template').default(false),
   sort_order: integer('sort_order').default(0),
+  experience_level: text('experience_level', {
+    enum: ['beginner', 'intermediate', 'advanced'],
+  }),
   created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' }).defaultNow(),
 });

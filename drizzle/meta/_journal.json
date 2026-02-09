@@ -8,6 +8,13 @@
       "when": 1770613096221,
       "tag": "0000_familiar_salo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770669053607,
+      "tag": "0001_steady_zuras",
+      "breakpoints": true
     }
   ]
 }

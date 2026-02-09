@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
 
     // Filter by experience level if provided
     if (experienceLevel && ['beginner', 'intermediate', 'advanced'].includes(experienceLevel)) {
-      // For templates, we could store experience_level in a future schema update
-      // For now, just return all templates
+      conditions.push(eq(routines.experience_level, experienceLevel as 'beginner' | 'intermediate' | 'advanced'));
     }
 
     // Fetch template routines

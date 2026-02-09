@@ -1,0 +1,1 @@
+ALTER TABLE "routines" ADD COLUMN "experience_level" text;
