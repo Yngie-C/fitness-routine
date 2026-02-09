@@ -73,11 +73,11 @@ export function RoutineList({ initialRoutines }: RoutineListProps) {
             나만의 루틴을 만들어보세요!
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button onClick={() => router.push('/routines/new')}>
+            <Button onClick={() => router.push('/settings/routines/new')}>
               <Plus className="h-4 w-4 mr-2" />
               새 루틴 만들기
             </Button>
-            <Button variant="outline" onClick={() => router.push('/routines/templates')}>
+            <Button variant="outline" onClick={() => router.push('/settings/routines/templates')}>
               템플릿 둘러보기
             </Button>
           </div>

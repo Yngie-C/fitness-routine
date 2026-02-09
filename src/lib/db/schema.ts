@@ -91,6 +91,9 @@ export const workout_sessions = pgTable('workout_sessions', {
   duration_seconds: integer('duration_seconds'),
   total_volume: numeric('total_volume'),
   notes: text('notes'),
+  workout_date: text('workout_date'),  // DATE 형식 문자열 'YYYY-MM-DD'
+  session_type: text('session_type', { enum: ['realtime', 'manual'] }).default('realtime'),
+  updated_at: timestamp('updated_at', { withTimezone: true, mode: 'string' }).defaultNow(),
   sync_status: text('sync_status').default('synced'),
   client_id: uuid('client_id').unique(),
   client_updated_at: timestamp('client_updated_at', { withTimezone: true, mode: 'string' }),

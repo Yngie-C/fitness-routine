@@ -68,14 +68,14 @@ export function RoutineCard({ routine, onDelete }: RoutineCardProps) {
   const handleEdit = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    router.push(`/routines/${routine.id}/edit`);
+    router.push(`/settings/routines/${routine.id}/edit`);
   };
 
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <Link href={`/routines/${routine.id}/edit`} className="flex-1 min-w-0">
+          <Link href={`/settings/routines/${routine.id}/edit`} className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <ListChecks className="h-5 w-5 text-primary flex-shrink-0" />
               <h3 className="font-semibold text-lg truncate">{routine.name}</h3>

@@ -69,7 +69,7 @@ export default function StatsPage() {
         <p className="text-sm text-muted-foreground mb-4">
           운동 기록이 쌓이면 여기서 진행 상황을 확인할 수 있어요
         </p>
-        <Link href="/workout">
+        <Link href="/record">
           <Button>운동 시작하기</Button>
         </Link>
       </div>

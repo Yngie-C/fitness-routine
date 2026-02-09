@@ -16,7 +16,7 @@ export default function WorkoutSessionPage() {
 
   useEffect(() => {
     if (!activeWorkout) {
-      router.push('/workout');
+      router.push('/record');
       return;
     }
 

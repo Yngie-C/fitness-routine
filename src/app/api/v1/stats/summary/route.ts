@@ -58,14 +58,21 @@ export async function GET(request: NextRequest) {
 
     // Get this week's sessions
     const thisWeekSessions = await db
-      .select()
+      .select({
+        id: workout_sessions.id,
+        user_id: workout_sessions.user_id,
+        routine_id: workout_sessions.routine_id,
+        started_at: workout_sessions.started_at,
+        completed_at: workout_sessions.completed_at,
+        workout_date: workout_sessions.workout_date,
+      })
       .from(workout_sessions)
       .where(
         and(
           eq(workout_sessions.user_id, user.id),
           isNotNull(workout_sessions.completed_at),
-          gte(workout_sessions.completed_at, weekStart.toISOString()),
-          lte(workout_sessions.completed_at, weekEnd.toISOString())
+          gte(workout_sessions.workout_date, format(weekStart, 'yyyy-MM-dd')),
+          lte(workout_sessions.workout_date, format(weekEnd, 'yyyy-MM-dd'))
         )
       );
 
@@ -80,8 +87,8 @@ export async function GET(request: NextRequest) {
         and(
           eq(workout_sessions.user_id, user.id),
           isNotNull(workout_sessions.completed_at),
-          gte(workout_sessions.completed_at, weekStart.toISOString()),
-          lte(workout_sessions.completed_at, weekEnd.toISOString())
+          gte(workout_sessions.workout_date, format(weekStart, 'yyyy-MM-dd')),
+          lte(workout_sessions.workout_date, format(weekEnd, 'yyyy-MM-dd'))
         )
       );
 
@@ -90,7 +97,7 @@ export async function GET(request: NextRequest) {
     // Calculate unique workout days this week
     const uniqueDays = new Set(
       thisWeekSessions.map((session: any) =>
-        format(parseISO(session.completed_at!), 'yyyy-MM-dd')
+        session.workout_date || format(parseISO(session.completed_at!), 'yyyy-MM-dd')
       )
     );
     const workoutDays = uniqueDays.size;
@@ -99,6 +106,7 @@ export async function GET(request: NextRequest) {
     const allCompletedSessions = await db
       .select({
         completed_at: workout_sessions.completed_at,
+        workout_date: workout_sessions.workout_date,
       })
       .from(workout_sessions)
       .where(
@@ -112,7 +120,7 @@ export async function GET(request: NextRequest) {
     // Get unique workout dates
     const workoutDates = new Set(
       allCompletedSessions
-        .map((s: any) => format(parseISO(s.completed_at!), 'yyyy-MM-dd'))
+        .map((s: any) => s.workout_date || format(parseISO(s.completed_at!), 'yyyy-MM-dd'))
     );
 
     // Calculate streak from today

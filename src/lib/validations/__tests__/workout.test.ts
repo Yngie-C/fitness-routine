@@ -20,6 +20,28 @@ describe('workoutSetSchema', () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it('RPE 값을 허용한다 (1-10)', () => {
+    const result = workoutSetSchema.safeParse({
+      exercise_id: '550e8400-e29b-41d4-a716-446655440000',
+      set_number: 1,
+      weight: 80,
+      reps: 5,
+      rpe: 8,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('RPE 범위 초과를 거부한다', () => {
+    const result = workoutSetSchema.safeParse({
+      exercise_id: '550e8400-e29b-41d4-a716-446655440000',
+      set_number: 1,
+      weight: 80,
+      reps: 5,
+      rpe: 11,
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe('sessionStartSchema', () => {
@@ -30,9 +52,29 @@ describe('sessionStartSchema', () => {
     expect(result.success).toBe(true);
   });
 
+  it('루틴 ID 없이도 세션 시작을 허용한다 (수동 기록)', () => {
+    const result = sessionStartSchema.safeParse({
+      workout_date: '2026-02-10',
+      session_type: 'manual',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('빈 객체도 허용한다 (기본값 적용)', () => {
+    const result = sessionStartSchema.safeParse({});
+    expect(result.success).toBe(true);
+  });
+
   it('유효하지 않은 UUID를 거부한다', () => {
     const result = sessionStartSchema.safeParse({
       routine_id: 'invalid-uuid',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('유효하지 않은 session_type을 거부한다', () => {
+    const result = sessionStartSchema.safeParse({
+      session_type: 'invalid',
     });
     expect(result.success).toBe(false);
   });
@@ -43,6 +85,14 @@ describe('sessionCompleteSchema', () => {
     const result = sessionCompleteSchema.safeParse({
       duration_seconds: 3600,
       total_volume: 15000,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('duration 없이도 유효하다 (수동 기록)', () => {
+    const result = sessionCompleteSchema.safeParse({
+      total_volume: 5000,
+      completed_at: '2026-02-10T00:00:00Z',
     });
     expect(result.success).toBe(true);
   });

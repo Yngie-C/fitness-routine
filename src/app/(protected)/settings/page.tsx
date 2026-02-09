@@ -13,7 +13,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { Loader2, LogOut, User } from 'lucide-react';
+import { Loader2, LogOut, User, ListChecks, Dumbbell, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -149,6 +150,42 @@ export default function SettingsPage() {
           프로필 및 앱 설정을 관리하세요
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>데이터 관리</CardTitle>
+          <CardDescription>루틴과 운동종목을 관리하세요</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Link
+            href="/settings/routines"
+            className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <ListChecks className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <div className="font-medium">루틴 관리</div>
+                <div className="text-sm text-muted-foreground">나만의 운동 루틴을 만들고 관리하세요</div>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Link>
+          <Separator />
+          <Link
+            href="/settings/exercises"
+            className="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <Dumbbell className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <div className="font-medium">운동종목 관리</div>
+                <div className="text-sm text-muted-foreground">운동을 검색하고 커스텀 운동을 추가하세요</div>
+              </div>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Link>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

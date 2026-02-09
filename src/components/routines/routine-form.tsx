@@ -184,7 +184,7 @@ export function RoutineForm({ initialData, mode }: RoutineFormProps) {
       }
 
       toast.success(mode === 'create' ? '루틴이 생성되었습니다' : '루틴이 수정되었습니다');
-      router.push('/routines');
+      router.push('/settings/routines');
       router.refresh();
     } catch (error) {
       console.error('Save routine error:', error);

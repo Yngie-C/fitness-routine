@@ -2,13 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Dumbbell, ListChecks, BarChart3, Settings } from 'lucide-react';
+import { Home, Calendar, BarChart3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: '홈', icon: Home },
-  { href: '/routines', label: '루틴', icon: ListChecks },
-  { href: '/workout', label: '운동', icon: Dumbbell },
+  { href: '/record', label: '기록', icon: Calendar },
   { href: '/stats', label: '통계', icon: BarChart3 },
   { href: '/settings', label: '설정', icon: Settings },
 ];

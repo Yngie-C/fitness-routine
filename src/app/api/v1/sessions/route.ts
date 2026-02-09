@@ -21,16 +21,23 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const from = searchParams.get('from');
     const to = searchParams.get('to');
+    const date = searchParams.get('date'); // NEW: specific date filter
     const limit = parseInt(searchParams.get('limit') || '20', 10);
     const cursor = searchParams.get('cursor');
 
-    // Date range filtering
     const conditions = [eq(workout_sessions.user_id, user.id)];
-    if (from) {
-      conditions.push(gte(workout_sessions.started_at, from));
-    }
-    if (to) {
-      conditions.push(lte(workout_sessions.started_at, to));
+
+    // Date-specific filter (workout_date based)
+    if (date) {
+      conditions.push(eq(workout_sessions.workout_date, date));
+    } else {
+      // Legacy from/to filter (started_at based)
+      if (from) {
+        conditions.push(gte(workout_sessions.started_at, from));
+      }
+      if (to) {
+        conditions.push(lte(workout_sessions.started_at, to));
+      }
     }
     if (cursor) {
       conditions.push(lte(workout_sessions.started_at, cursor));
@@ -45,6 +52,8 @@ export async function GET(request: NextRequest) {
         duration_seconds: workout_sessions.duration_seconds,
         total_volume: workout_sessions.total_volume,
         notes: workout_sessions.notes,
+        workout_date: workout_sessions.workout_date,
+        session_type: workout_sessions.session_type,
         routine: {
           name: routines.name,
         },
@@ -61,7 +70,6 @@ export async function GET(request: NextRequest) {
       ? items[items.length - 1].started_at
       : null;
 
-    // Support both response formats for backward compatibility
     return NextResponse.json({
       sessions: items,
       data: items,
@@ -101,21 +109,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { routine_id } = validation.data;
+    const { routine_id, workout_date, session_type } = validation.data;
 
-    // Verify routine ownership
-    const routine = await db.query.routines.findFirst({
-      where: and(
-        eq(routines.id, routine_id),
-        eq(routines.user_id, user.id)
-      ),
-    });
+    // Verify routine ownership (only if routine_id provided)
+    if (routine_id) {
+      const routine = await db.query.routines.findFirst({
+        where: and(
+          eq(routines.id, routine_id),
+          eq(routines.user_id, user.id)
+        ),
+      });
 
-    if (!routine) {
-      return NextResponse.json(
-        { error: 'Routine not found' },
-        { status: 404 }
-      );
+      if (!routine) {
+        return NextResponse.json(
+          { error: 'Routine not found' },
+          { status: 404 }
+        );
+      }
+    }
+
+    // Determine started_at: for manual sessions, use workout_date midnight KST
+    let startedAt: Date;
+    if (session_type === 'manual' && workout_date) {
+      // workout_date is 'YYYY-MM-DD', set to midnight KST (UTC+9)
+      startedAt = new Date(`${workout_date}T00:00:00+09:00`);
+    } else {
+      startedAt = new Date();
     }
 
     // Create session
@@ -123,8 +142,10 @@ export async function POST(request: NextRequest) {
       .insert(workout_sessions)
       .values({
         user_id: user.id,
-        routine_id,
-        started_at: new Date(),
+        routine_id: routine_id || null,
+        started_at: startedAt.toISOString(),
+        workout_date: workout_date || new Date().toISOString().split('T')[0],
+        session_type: session_type || 'realtime',
       })
       .returning();
 

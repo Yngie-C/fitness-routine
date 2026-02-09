@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
     const sets = await db
       .select({
         completed_at: workout_sessions.completed_at,
+        workout_date: workout_sessions.workout_date,
         weight: workout_sets.weight,
         reps: workout_sets.reps,
       })
@@ -66,8 +67,8 @@ export async function GET(request: NextRequest) {
         and(
           eq(workout_sessions.user_id, user.id),
           isNotNull(workout_sessions.completed_at),
-          gte(workout_sessions.completed_at, fromDate.toISOString()),
-          lte(workout_sessions.completed_at, toDate.toISOString())
+          gte(workout_sessions.workout_date, from),
+          lte(workout_sessions.workout_date, to)
         )
       );
 
@@ -75,7 +76,8 @@ export async function GET(request: NextRequest) {
     const volumeByPeriod: Map<string, number> = new Map();
 
     sets.forEach((set: any) => {
-      const date = parseISO(set.completed_at!);
+      const dateStr = set.workout_date || format(parseISO(set.completed_at!), 'yyyy-MM-dd');
+      const date = parseISO(dateStr);
       let periodKey: string;
 
       if (period === 'weekly') {

@@ -9,6 +9,8 @@ export interface LocalWorkoutSession {
   duration_seconds?: number;
   total_volume?: number;
   notes?: string;
+  workout_date?: string;
+  session_type?: 'realtime' | 'manual';
   sync_status: 'pending' | 'synced' | 'conflict';
   client_updated_at: string;
 }
@@ -52,6 +54,11 @@ class FitnessDatabase extends Dexie {
     super('FitnessDB');
     this.version(1).stores({
       workoutSessions: 'client_id, server_id, sync_status, started_at',
+      workoutSets: 'client_id, server_id, session_client_id, sync_status',
+      syncQueue: '++id, status, table_name, record_client_id',
+    });
+    this.version(2).stores({
+      workoutSessions: 'client_id, server_id, sync_status, started_at, workout_date, session_type',
       workoutSets: 'client_id, server_id, session_client_id, sync_status',
       syncQueue: '++id, status, table_name, record_client_id',
     });

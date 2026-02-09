@@ -57,14 +57,15 @@ export async function GET(request: NextRequest) {
     const sessions = await db
       .select({
         completed_at: workout_sessions.completed_at,
+        workout_date: workout_sessions.workout_date,
       })
       .from(workout_sessions)
       .where(
         and(
           eq(workout_sessions.user_id, user.id),
           isNotNull(workout_sessions.completed_at),
-          gte(workout_sessions.completed_at, fromDate.toISOString()),
-          lte(workout_sessions.completed_at, toDate.toISOString())
+          gte(workout_sessions.workout_date, from),
+          lte(workout_sessions.workout_date, to)
         )
       );
 
@@ -72,7 +73,8 @@ export async function GET(request: NextRequest) {
     const frequencyByPeriod: Map<string, number> = new Map();
 
     sessions.forEach((session: any) => {
-      const date = parseISO(session.completed_at!);
+      const dateStr = session.workout_date || format(parseISO(session.completed_at!), 'yyyy-MM-dd');
+      const date = parseISO(dateStr);
       let periodKey: string;
 
       if (period === 'weekly') {
