@@ -12,7 +12,7 @@ let db: any = null;
 
 if (isValidConnection) {
   try {
-    client = postgres(connectionString);
+    client = postgres(connectionString, { prepare: false });
     db = drizzle(client, { schema });
   } catch (error) {
     console.error('Failed to initialize database connection:', error);
