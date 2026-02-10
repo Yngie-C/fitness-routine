@@ -49,6 +49,7 @@ export function TemplatePicker() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [copyingId, setCopyingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && templates.length === 0) {
@@ -74,9 +75,25 @@ export function TemplatePicker() {
     }
   };
 
-  const handleTemplateSelect = (templateId: string) => {
-    setOpen(false);
-    router.push(`/settings/routines/new?template=${templateId}`);
+  const handleTemplateSelect = async (templateId: string) => {
+    if (copyingId) return;
+    setCopyingId(templateId);
+    try {
+      const response = await fetch(
+        `/api/v1/routines/templates/${templateId}/copy`,
+        { method: 'POST' }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to copy template');
+      }
+      toast.success('루틴이 추가되었습니다!');
+      setOpen(false);
+      router.push('/settings/routines');
+    } catch {
+      toast.error('루틴 복사에 실패했습니다.');
+    } finally {
+      setCopyingId(null);
+    }
   };
 
   const beginnerTemplates = templates.filter(
@@ -125,14 +142,18 @@ export function TemplatePicker() {
           const level = template.experience_level as keyof typeof levelConfig;
           const config = levelConfig[level];
 
+          const isCopying = copyingId === template.id;
+          const isDisabled = copyingId !== null;
+
           return (
             <Card
               key={template.id}
-              className="cursor-pointer hover:bg-accent/50 transition-colors"
+              className={`transition-colors ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-accent/50'}`}
               onClick={() => handleTemplateSelect(template.id)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-2 mb-2">
+                  {isCopying && <Loader2 className="h-4 w-4 animate-spin" />}
                   <h3 className="font-semibold">{template.name}</h3>
                   {config && (
                     <Badge variant="secondary" className={config.className}>
