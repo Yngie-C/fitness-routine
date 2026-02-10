@@ -91,7 +91,7 @@ async function mergeDuplicates(
       console.log(`      - workout_sets: ${refs.workout_sets} references`);
 
       if (execute) {
-        await db.transaction(async (tx) => {
+        await db.transaction(async (tx: typeof db) => {
           // Update routine_exercises references
           if (refs.routine_exercises > 0) {
             await tx
