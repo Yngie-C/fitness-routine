@@ -112,13 +112,13 @@ export async function PATCH(
       );
     }
 
-    const { duration_seconds, total_volume, notes } = validation.data;
+    const { duration_seconds, total_volume, notes, completed_at } = validation.data;
 
     // Update session
     const [updatedSession] = await db
       .update(workout_sessions)
       .set({
-        completed_at: new Date(),
+        ...(completed_at !== undefined ? { completed_at: new Date(completed_at) } : {}),
         duration_seconds,
         total_volume,
         notes,

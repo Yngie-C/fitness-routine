@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Plus, ListChecks } from 'lucide-react';
+import { ArrowLeft, Plus, ListChecks, Pencil } from 'lucide-react';
 import { WorkoutLogForm } from '@/components/record/workout-log-form';
 import { RoutinePresetSheet } from '@/components/record/routine-preset-sheet';
 import { ExerciseSelector } from '@/components/routines/exercise-selector';
@@ -75,7 +75,7 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
   const [showExerciseSelector, setShowExerciseSelector] = useState(false);
   const [isFormActive, setIsFormActive] = useState(false);
 
-  const { exercises, setDate, loadFromRoutine, addExercise, reset } = useRecordStore();
+  const { exercises, setDate, loadFromRoutine, addExercise, loadFromSession, isEditing, editingSessionId, reset } = useRecordStore();
 
   useEffect(() => {
     // Reset store and set date on mount
@@ -99,6 +99,37 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
         rest_seconds: re.rest_seconds,
       }))
     );
+  };
+
+  const handleEditSession = (session: SessionData) => {
+    // Group workout_sets by exercise_id
+    const exerciseMap = new Map<string, {
+      exercise_id: string;
+      name: string;
+      sets: Array<{ weight: number | null; reps: number; is_warmup: boolean; rpe: number | null }>;
+    }>();
+
+    for (const ws of session.workout_sets) {
+      if (!exerciseMap.has(ws.exercise_id)) {
+        exerciseMap.set(ws.exercise_id, {
+          exercise_id: ws.exercise_id,
+          name: ws.exercise.name_ko,
+          sets: [],
+        });
+      }
+      exerciseMap.get(ws.exercise_id)!.sets.push({
+        weight: ws.weight ? parseFloat(ws.weight) : null,
+        reps: ws.reps,
+        is_warmup: ws.is_warmup,
+        rpe: ws.rpe,
+      });
+    }
+
+    loadFromSession({
+      id: session.id,
+      notes: session.notes,
+      exercises: Array.from(exerciseMap.values()),
+    });
   };
 
   const handleAddExercises = (selected: Exercise[]) => {
@@ -125,11 +156,25 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
         <div className="space-y-4 mb-6">
           <h2 className="text-lg font-semibold">기존 기록</h2>
           {existingSessions.map((session) => (
-            <Card key={session.id}>
+            <Card
+              key={session.id}
+              className={editingSessionId === session.id ? 'ring-2 ring-primary border-primary' : ''}
+            >
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">
-                  {session.routine?.name || '자유 운동'}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">
+                    {session.routine?.name || '자유 운동'}
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEditSession(session)}
+                    disabled={isEditing && editingSessionId !== session.id}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-sm text-muted-foreground">

@@ -8,7 +8,7 @@ import { ExerciseLogCard } from './exercise-log-card';
 import { ExerciseSelector } from '@/components/routines/exercise-selector';
 import { useRecordStore } from '@/stores/record-store';
 import { useWorkoutStore } from '@/stores/workout-store';
-import { Plus, Save, Loader2, AlertTriangle } from 'lucide-react';
+import { Plus, Save, Loader2, AlertTriangle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Exercise } from '@/lib/db/types';
 import Link from 'next/link';
@@ -45,6 +45,7 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
     removeSet,
     updateSet,
     reorderExercises,
+    reset,
   } = useRecordStore();
 
   const sensors = useSensors(
@@ -86,64 +87,93 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
 
     setIsSaving(true);
     try {
-      // Create session
-      const sessionRes = await fetch('/api/v1/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          workout_date: date,
-          session_type: 'manual',
-        }),
-      });
-
-      if (!sessionRes.ok) {
-        throw new Error('세션 생성 실패');
-      }
-
-      const { data: session } = await sessionRes.json();
-
-      // Add sets for each exercise
-      for (const exercise of exercises) {
-        for (let i = 0; i < exercise.sets.length; i++) {
-          const s = exercise.sets[i];
-          await fetch(`/api/v1/sessions/${session.id}/sets`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              exercise_id: exercise.exercise_id,
-              set_number: i + 1,
-              weight: s.weight,
-              reps: s.reps,
-              is_warmup: s.is_warmup,
-              rpe: s.rpe,
-            }),
-          });
-        }
-      }
-
-      // Complete session
       const totalVolume = exercises.reduce((total, ex) => {
         return total + ex.sets.reduce((exTotal, s) => {
           return exTotal + (s.weight || 0) * s.reps;
         }, 0);
       }, 0);
 
-      await fetch(`/api/v1/sessions/${session.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          completed_at: new Date().toISOString(),
-          total_volume: totalVolume,
-          notes: notes || null,
-        }),
-      });
+      if (isEditing && editingSessionId) {
+        // Edit mode: bulk update existing session
+        const res = await fetch(`/api/v1/sessions/${editingSessionId}/bulk-update`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exercises: exercises.map((ex) => ({
+              exercise_id: ex.exercise_id,
+              sets: ex.sets.map((s, i) => ({
+                set_number: i + 1,
+                weight: s.weight,
+                reps: s.reps,
+                is_warmup: s.is_warmup,
+                rpe: s.rpe,
+              })),
+            })),
+            total_volume: totalVolume,
+            notes: notes || null,
+          }),
+        });
 
-      toast.success('운동 기록이 저장되었습니다');
+        if (!res.ok) {
+          throw new Error('세션 수정 실패');
+        }
+
+        toast.success('운동 기록이 수정되었습니다');
+      } else {
+        // Create mode: new session
+        const sessionRes = await fetch('/api/v1/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            workout_date: date,
+            session_type: 'manual',
+          }),
+        });
+
+        if (!sessionRes.ok) {
+          throw new Error('세션 생성 실패');
+        }
+
+        const { data: session } = await sessionRes.json();
+
+        // Add sets for each exercise
+        for (const exercise of exercises) {
+          for (let i = 0; i < exercise.sets.length; i++) {
+            const s = exercise.sets[i];
+            await fetch(`/api/v1/sessions/${session.id}/sets`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                exercise_id: exercise.exercise_id,
+                set_number: i + 1,
+                weight: s.weight,
+                reps: s.reps,
+                is_warmup: s.is_warmup,
+                rpe: s.rpe,
+              }),
+            });
+          }
+        }
+
+        // Complete session
+        await fetch(`/api/v1/sessions/${session.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            completed_at: new Date().toISOString(),
+            total_volume: totalVolume,
+            notes: notes || null,
+          }),
+        });
+
+        toast.success('운동 기록이 저장되었습니다');
+      }
+
       router.push('/record');
       router.refresh();
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('저장에 실패했습니다');
+      toast.error(isEditing ? '수정에 실패했습니다' : '저장에 실패했습니다');
     } finally {
       setIsSaving(false);
     }
@@ -151,6 +181,24 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
 
   return (
     <div className="space-y-4">
+      {/* 수정 모드 배너 */}
+      {isEditing && (
+        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+            기록 수정 중
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-blue-700 dark:text-blue-300"
+            onClick={() => reset()}
+          >
+            <X className="h-4 w-4 mr-1" />
+            취소
+          </Button>
+        </div>
+      )}
+
       {/* 실시간 세션 경고 */}
       {activeWorkout && (
         <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg">
@@ -218,12 +266,12 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
           {isSaving ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              저장 중...
+              {isEditing ? '수정 중...' : '저장 중...'}
             </>
           ) : (
             <>
               <Save className="h-4 w-4 mr-2" />
-              운동 기록 저장
+              {isEditing ? '수정 저장' : '운동 기록 저장'}
             </>
           )}
         </Button>
