@@ -115,7 +115,8 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
         });
 
         if (!res.ok) {
-          throw new Error('세션 수정 실패');
+          const errBody = await res.json().catch(() => null);
+          throw new Error(errBody?.error || '세션 수정 실패');
         }
 
         toast.success('운동 기록이 수정되었습니다');
@@ -140,7 +141,7 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
         for (const exercise of exercises) {
           for (let i = 0; i < exercise.sets.length; i++) {
             const s = exercise.sets[i];
-            await fetch(`/api/v1/sessions/${session.id}/sets`, {
+            const setRes = await fetch(`/api/v1/sessions/${session.id}/sets`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -152,11 +153,14 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
                 rpe: s.rpe,
               }),
             });
+            if (!setRes.ok) {
+              throw new Error('세트 저장 실패');
+            }
           }
         }
 
         // Complete session
-        await fetch(`/api/v1/sessions/${session.id}`, {
+        const completeRes = await fetch(`/api/v1/sessions/${session.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -165,6 +169,9 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
             notes: notes || null,
           }),
         });
+        if (!completeRes.ok) {
+          throw new Error('세션 완료 처리 실패');
+        }
 
         toast.success('운동 기록이 저장되었습니다');
       }
