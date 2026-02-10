@@ -1,8 +1,8 @@
 import { db } from './index';
-import { exercises, profiles, routines, routine_exercises } from './schema';
+import { exercises, profiles, routines, routine_exercises, workout_sets } from './schema';
 import { seedExercises } from './seed-exercises';
 import { seedRoutineTemplates } from './seed-routines';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -85,6 +85,20 @@ async function seed() {
   try {
     // 1. Insert seed exercises (멱등성: 기존 시드 운동 삭제 후 삽입)
     console.log('📝 Inserting exercises...');
+
+    // FK 제약조건 해결: 시드 운동을 참조하는 레코드 먼저 삭제
+    const seedExerciseIds = await db
+      .select({ id: exercises.id })
+      .from(exercises)
+      .where(eq(exercises.is_custom, false));
+
+    const ids = seedExerciseIds.map((e: any) => e.id);
+    if (ids.length > 0) {
+      console.log(`🗑️ Deleting references to ${ids.length} seed exercises...`);
+      await db.delete(routine_exercises).where(inArray(routine_exercises.exercise_id, ids));
+      await db.delete(workout_sets).where(inArray(workout_sets.exercise_id, ids));
+    }
+
     await db.delete(exercises).where(eq(exercises.is_custom, false));
     await db.insert(exercises).values(seedExercises);
     console.log(`✅ Inserted ${seedExercises.length} exercises`);

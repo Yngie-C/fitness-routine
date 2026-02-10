@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "node --loader ts-node/esm src/lib/db/seed.ts",
+    "db:merge-duplicates": "tsx src/lib/db/merge-duplicates.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

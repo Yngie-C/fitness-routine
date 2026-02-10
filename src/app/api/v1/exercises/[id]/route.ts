@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod/v4';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { exercises } from '@/lib/db/schema';
+import { exercises, routine_exercises, workout_sets } from '@/lib/db/schema';
 import { exerciseSchema } from '@/lib/validations/exercise';
 import { eq, and } from 'drizzle-orm';
 import type { ApiError } from '@/types';
@@ -241,6 +241,28 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         { status: 403 }
       );
     }
+
+    // workout_sets에서 이 운동을 참조하는지 확인
+    const [hasWorkoutSets] = await db
+      .select()
+      .from(workout_sets)
+      .where(eq(workout_sets.exercise_id, id))
+      .limit(1);
+
+    if (hasWorkoutSets) {
+      return NextResponse.json<ApiError>(
+        {
+          error: {
+            code: 'CONFLICT',
+            message: '이 운동에 대한 기록이 있어 삭제할 수 없습니다. 다른 운동으로 병합(merge)해주세요.',
+          },
+        },
+        { status: 409 }
+      );
+    }
+
+    // routine_exercises 삭제 (이것은 단순 설정이므로 삭제 가능)
+    await db.delete(routine_exercises).where(eq(routine_exercises.exercise_id, id));
 
     // 운동 삭제
     await db.delete(exercises).where(eq(exercises.id, id));
