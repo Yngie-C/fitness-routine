@@ -18,32 +18,36 @@ interface SetLogRowProps {
 export function SetLogRow({ setIndex, set, onUpdate, onRemove, canRemove }: SetLogRowProps) {
   return (
     <div className="flex items-center gap-2 py-2">
-      <div className="w-8 text-center text-sm font-medium text-muted-foreground">
+      <div className="w-8 text-center text-sm font-medium text-muted-foreground shrink-0">
         {setIndex + 1}
       </div>
 
-      <Input
-        type="number"
-        inputMode="decimal"
-        step="2.5"
-        value={set.weight ?? ''}
-        onChange={(e) => onUpdate({ weight: e.target.value ? parseFloat(e.target.value) : null })}
-        placeholder="0"
-        className="w-20 text-center h-9"
-      />
-      <span className="text-xs text-muted-foreground">kg</span>
+      <div className="flex-1 flex items-center gap-1">
+        <Input
+          type="number"
+          inputMode="decimal"
+          step="2.5"
+          value={set.weight ?? ''}
+          onChange={(e) => onUpdate({ weight: e.target.value ? parseFloat(e.target.value) : null })}
+          placeholder="0"
+          className="flex-1 min-w-0 text-center h-9"
+        />
+        <span className="text-xs text-muted-foreground shrink-0">kg</span>
+      </div>
 
-      <Input
-        type="number"
-        inputMode="numeric"
-        value={set.reps || ''}
-        onChange={(e) => onUpdate({ reps: parseInt(e.target.value) || 0 })}
-        placeholder="0"
-        className="w-16 text-center h-9"
-      />
-      <span className="text-xs text-muted-foreground">회</span>
+      <div className="flex-1 flex items-center gap-1">
+        <Input
+          type="number"
+          inputMode="numeric"
+          value={set.reps || ''}
+          onChange={(e) => onUpdate({ reps: parseInt(e.target.value) || 0 })}
+          placeholder="0"
+          className="flex-1 min-w-0 text-center h-9"
+        />
+        <span className="text-xs text-muted-foreground shrink-0">회</span>
+      </div>
 
-      <div className="flex items-center gap-1">
+      <div className="w-14 flex items-center justify-center gap-1 shrink-0">
         <Checkbox
           checked={set.is_warmup}
           onCheckedChange={(checked) => onUpdate({ is_warmup: checked === true })}
@@ -52,11 +56,13 @@ export function SetLogRow({ setIndex, set, onUpdate, onRemove, canRemove }: SetL
         <span className="text-xs text-muted-foreground">W</span>
       </div>
 
-      {canRemove && (
-        <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0" onClick={onRemove}>
-          <X className="h-3 w-3" />
-        </Button>
-      )}
+      <div className="w-8 shrink-0 flex justify-center">
+        {canRemove && (
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onRemove}>
+            <X className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Copy } from 'lucide-react';
 import { SetLogRow } from './set-log-row';
 import type { RecordExercise, RecordSet } from '@/stores/record-store';
 import { useSortable } from '@dnd-kit/sortable';
@@ -15,6 +15,7 @@ interface ExerciseLogCardProps {
   onRemoveSet: (setId: string) => void;
   onUpdateSet: (setId: string, data: Partial<RecordSet>) => void;
   onRemoveExercise: () => void;
+  onDuplicateExercise: () => void;
 }
 
 export function ExerciseLogCard({
@@ -24,6 +25,7 @@ export function ExerciseLogCard({
   onRemoveSet,
   onUpdateSet,
   onRemoveExercise,
+  onDuplicateExercise,
 }: ExerciseLogCardProps) {
   const {
     attributes,
@@ -42,34 +44,37 @@ export function ExerciseLogCard({
 
   return (
     <Card ref={setNodeRef} style={style}>
-      <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
+      <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <button
           type="button"
-          className="touch-none cursor-grab active:cursor-grabbing flex-shrink-0"
+          className="touch-none cursor-grab active:cursor-grabbing shrink-0"
           {...attributes}
           {...listeners}
           aria-label="운동 순서 변경"
         >
           <GripVertical className="h-5 w-5 text-muted-foreground" />
         </button>
-        <div className="flex-1">
-          <div className="font-semibold">{exercise.name}</div>
-          <div className="text-xs text-muted-foreground">{exercise.sets.length}세트</div>
+        <div className="flex-1 flex items-center gap-2 min-w-0">
+          <span className="font-semibold truncate">{exercise.name}</span>
+          <span className="text-xs text-muted-foreground shrink-0">{exercise.sets.length}세트</span>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={onRemoveExercise}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </CardHeader>
+        <div className="flex items-center gap-0 ml-auto shrink-0">
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={onDuplicateExercise} title="운동 복제">
+            <Copy className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={onRemoveExercise} title="운동 삭제">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
       <CardContent className="pt-0">
         {/* 헤더 */}
         <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground border-b mb-1">
-          <div className="w-8 text-center">세트</div>
-          <div className="w-20 text-center">무게</div>
-          <div className="w-4" />
-          <div className="w-16 text-center">횟수</div>
-          <div className="w-4" />
-          <div className="w-10 text-center">웜업</div>
-          <div className="w-7" />
+          <div className="w-8 text-center shrink-0">세트</div>
+          <div className="flex-1 text-center">무게(kg)</div>
+          <div className="flex-1 text-center">횟수(회)</div>
+          <div className="w-14 text-center shrink-0">웜업</div>
+          <div className="w-8 shrink-0" />
         </div>
 
         {/* 세트 목록 */}
