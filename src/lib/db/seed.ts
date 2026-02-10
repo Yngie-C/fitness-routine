@@ -83,8 +83,9 @@ async function seed() {
   console.log('🌱 Seeding database...');
 
   try {
-    // 1. Insert seed exercises
+    // 1. Insert seed exercises (멱등성: 기존 시드 운동 삭제 후 삽입)
     console.log('📝 Inserting exercises...');
+    await db.delete(exercises).where(eq(exercises.is_custom, false));
     await db.insert(exercises).values(seedExercises);
     console.log(`✅ Inserted ${seedExercises.length} exercises`);
 

@@ -133,7 +133,10 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
   };
 
   const handleAddExercises = (selected: Exercise[]) => {
-    selected.forEach((ex) => {
+    const newExercises = selected.filter(
+      (ex) => !exercises.some((e) => e.exercise_id === ex.id)
+    );
+    newExercises.forEach((ex) => {
       addExercise({ exercise_id: ex.id, name: ex.name_ko });
     });
   };

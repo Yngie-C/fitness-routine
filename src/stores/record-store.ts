@@ -98,26 +98,31 @@ export const useRecordStore = create<RecordState>()((set) => ({
     }),
 
   addExercise: (exercise) =>
-    set((state) => ({
-      exercises: [
-        ...state.exercises,
-        {
-          id: uuidv4(),
-          exercise_id: exercise.exercise_id,
-          name: exercise.name,
-          rest_seconds: 90,
-          sets: [
-            {
-              id: uuidv4(),
-              weight: null,
-              reps: 10,
-              is_warmup: false,
-              rpe: null,
-            },
-          ],
-        },
-      ],
-    })),
+    set((state) => {
+      if (state.exercises.some((e) => e.exercise_id === exercise.exercise_id)) {
+        return state;
+      }
+      return {
+        exercises: [
+          ...state.exercises,
+          {
+            id: uuidv4(),
+            exercise_id: exercise.exercise_id,
+            name: exercise.name,
+            rest_seconds: 90,
+            sets: [
+              {
+                id: uuidv4(),
+                weight: null,
+                reps: 10,
+                is_warmup: false,
+                rpe: null,
+              },
+            ],
+          },
+        ],
+      };
+    }),
 
   removeExercise: (exerciseClientId) =>
     set((state) => ({
