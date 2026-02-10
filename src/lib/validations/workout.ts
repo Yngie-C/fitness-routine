@@ -7,6 +7,8 @@ export const workoutSetSchema = z.object({
   reps: z.number().int().min(0).max(999),
   is_warmup: z.boolean().optional().default(false),
   rpe: z.number().int().min(1).max(10).optional().nullable(),
+  equipment_used: z.enum(['barbell','dumbbell','machine','cable','bodyweight','other']).optional().nullable(),
+  is_unilateral: z.boolean().optional().default(false),
 });
 
 export const sessionStartSchema = z.object({
@@ -25,6 +27,8 @@ export const sessionCompleteSchema = z.object({
 export const sessionBulkUpdateSchema = z.object({
   exercises: z.array(z.object({
     exercise_id: z.string().uuid(),
+    equipment_used: z.enum(['barbell','dumbbell','machine','cable','bodyweight','other']).optional().nullable(),
+    is_unilateral: z.boolean().optional().default(false),
     sets: z.array(z.object({
       set_number: z.number().int().min(1),
       weight: z.number().min(0).optional().nullable(),

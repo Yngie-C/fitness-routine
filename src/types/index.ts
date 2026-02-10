@@ -51,3 +51,13 @@ export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
   bodyweight: '맨몸',
   other: '기타',
 };
+
+// 원암/원레그 라벨 매핑 (운동 category 기반)
+export const UNILATERAL_LABELS: Record<string, string> = {
+  arms: '원암',
+  back: '원암',
+  shoulders: '원암',
+  chest: '원암',
+  legs: '원레그',
+  core: '원사이드',
+};

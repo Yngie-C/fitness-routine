@@ -10,6 +10,8 @@ interface WorkoutSet {
   is_warmup: boolean;
   rpe?: number;
   completed_at?: string;
+  equipment_used?: string;
+  is_unilateral?: boolean;
 }
 
 interface ActiveWorkout {
@@ -25,6 +27,11 @@ interface ActiveWorkout {
     target_reps: number;
     target_weight?: number;
     rest_seconds: number;
+    equipment_used?: string;
+    is_unilateral?: boolean;
+    available_equipment?: string[] | null;
+    supports_unilateral?: boolean;
+    category?: string;
   }>;
   completed_sets: WorkoutSet[];
 }
@@ -49,6 +56,8 @@ interface WorkoutState {
   stopRestTimer: () => void;
   completeWorkout: () => void;
   cancelWorkout: () => void;
+  updateExerciseEquipment: (exerciseId: string, equipment: string) => void;
+  toggleExerciseUnilateral: (exerciseId: string) => void;
 }
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -149,6 +158,32 @@ export const useWorkoutStore = create<WorkoutState>()(
       completeWorkout: () => set({ activeWorkout: null, restTimer: { isRunning: false, remaining: 0, total: 0 } }),
 
       cancelWorkout: () => set({ activeWorkout: null, restTimer: { isRunning: false, remaining: 0, total: 0 } }),
+
+      updateExerciseEquipment: (exerciseId, equipment) =>
+        set((state) => {
+          if (!state.activeWorkout) return state;
+          return {
+            activeWorkout: {
+              ...state.activeWorkout,
+              exercises: state.activeWorkout.exercises.map((e) =>
+                e.exercise_id === exerciseId ? { ...e, equipment_used: equipment } : e
+              ),
+            },
+          };
+        }),
+
+      toggleExerciseUnilateral: (exerciseId) =>
+        set((state) => {
+          if (!state.activeWorkout) return state;
+          return {
+            activeWorkout: {
+              ...state.activeWorkout,
+              exercises: state.activeWorkout.exercises.map((e) =>
+                e.exercise_id === exerciseId ? { ...e, is_unilateral: !e.is_unilateral } : e
+              ),
+            },
+          };
+        }),
     }),
     {
       name: 'active-workout',

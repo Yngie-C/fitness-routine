@@ -44,6 +44,8 @@ import { RestTimer } from './rest-timer';
 import { PreviousRecord } from './previous-record';
 import { useElapsedTime, formatElapsedTime } from '@/hooks/use-elapsed-time';
 import { cn } from '@/lib/utils';
+import { EQUIPMENT_LABELS, UNILATERAL_LABELS } from '@/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface WorkoutSessionProps {
   sessionId: string;
@@ -138,6 +140,8 @@ export function WorkoutSession({
     startRestTimer,
     reorderExercises,
     setCurrentExerciseIndex,
+    updateExerciseEquipment,
+    toggleExerciseUnilateral,
   } = useWorkoutStore();
 
   const [completedSetsCount, setCompletedSetsCount] = useState<Record<number, number>>({});
@@ -190,6 +194,8 @@ export function WorkoutSession({
       weight: data.weight_kg,
       reps: data.reps,
       is_warmup: data.is_warmup,
+      equipment_used: currentExercise.equipment_used,
+      is_unilateral: currentExercise.is_unilateral,
     });
 
     // Save to API
@@ -200,9 +206,11 @@ export function WorkoutSession({
         body: JSON.stringify({
           exercise_id: currentExercise.exercise_id,
           set_number: setNumber,
-          weight_kg: data.weight_kg,
+          weight: data.weight_kg,
           reps: data.reps,
           is_warmup: data.is_warmup,
+          equipment_used: currentExercise.equipment_used,
+          is_unilateral: currentExercise.is_unilateral,
         }),
       });
     } catch (error) {
@@ -344,6 +352,43 @@ export function WorkoutSession({
         <div className="text-sm text-muted-foreground mb-4">
           목표: {currentExercise.target_sets}세트 × {currentExercise.target_weight}kg × {currentExercise.target_reps}회
         </div>
+
+        {/* Equipment & Unilateral */}
+        {((currentExercise.available_equipment && currentExercise.available_equipment.length > 1) || currentExercise.supports_unilateral) && (
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            {currentExercise.available_equipment && currentExercise.available_equipment.length > 1 && (
+              <div className="flex items-center gap-1">
+                {currentExercise.available_equipment.map((eq) => (
+                  <button
+                    key={eq}
+                    type="button"
+                    className={cn(
+                      'px-2.5 py-1 text-xs rounded-full border transition-colors',
+                      currentExercise.equipment_used === eq
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                    )}
+                    onClick={() => updateExerciseEquipment(currentExercise.exercise_id, eq)}
+                  >
+                    {EQUIPMENT_LABELS[eq as keyof typeof EQUIPMENT_LABELS] || eq}
+                  </button>
+                ))}
+              </div>
+            )}
+            {currentExercise.supports_unilateral && (
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <Checkbox
+                  checked={currentExercise.is_unilateral ?? false}
+                  onCheckedChange={() => toggleExerciseUnilateral(currentExercise.exercise_id)}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {UNILATERAL_LABELS[currentExercise.category || ''] || '편측'}
+                </span>
+              </label>
+            )}
+          </div>
+        )}
 
         <PreviousRecord
           exerciseId={currentExercise.exercise_id}

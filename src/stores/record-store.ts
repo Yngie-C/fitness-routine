@@ -15,6 +15,13 @@ export interface RecordExercise {
   name: string;
   sets: RecordSet[];
   rest_seconds: number;
+  // Equipment & Unilateral (persisted to DB per set)
+  equipment_used: string | null;
+  is_unilateral: boolean;
+  // UI-only metadata (from exercises table, not persisted)
+  available_equipment: string[] | null;
+  supports_unilateral: boolean;
+  category: string;
 }
 
 interface RecordState {
@@ -36,10 +43,23 @@ interface RecordState {
     target_reps: number;
     target_weight: string | null;
     rest_seconds: number | null;
+    available_equipment?: string[] | null;
+    default_equipment?: string | null;
+    supports_unilateral?: boolean;
+    default_unilateral?: boolean;
+    category?: string;
   }>) => void;
 
   // Exercise management
-  addExercise: (exercise: { exercise_id: string; name: string }) => void;
+  addExercise: (exercise: {
+    exercise_id: string;
+    name: string;
+    available_equipment?: string[] | null;
+    default_equipment?: string | null;
+    supports_unilateral?: boolean;
+    default_unilateral?: boolean;
+    category?: string;
+  }) => void;
   removeExercise: (exerciseClientId: string) => void;
   reorderExercises: (oldIndex: number, newIndex: number) => void;
 
@@ -47,6 +67,8 @@ interface RecordState {
   addSet: (exerciseClientId: string) => void;
   removeSet: (exerciseClientId: string, setId: string) => void;
   updateSet: (exerciseClientId: string, setId: string, data: Partial<RecordSet>) => void;
+  updateExerciseEquipment: (exerciseClientId: string, equipment: string) => void;
+  toggleExerciseUnilateral: (exerciseClientId: string) => void;
 
   // Edit existing session
   loadFromSession: (session: {
@@ -55,6 +77,11 @@ interface RecordState {
     exercises: Array<{
       exercise_id: string;
       name: string;
+      equipment_used?: string | null;
+      is_unilateral?: boolean;
+      available_equipment?: string[] | null;
+      supports_unilateral?: boolean;
+      category?: string;
       sets: Array<{
         weight: number | null;
         reps: number;
@@ -85,6 +112,11 @@ export const useRecordStore = create<RecordState>()((set) => ({
         exercise_id: re.exercise_id,
         name: re.name,
         rest_seconds: re.rest_seconds ?? 90,
+        equipment_used: re.default_equipment ?? null,
+        is_unilateral: re.default_unilateral ?? false,
+        available_equipment: re.available_equipment ?? null,
+        supports_unilateral: re.supports_unilateral ?? false,
+        category: re.category ?? '',
         sets: Array.from({ length: re.target_sets }, (_, i) => ({
           id: uuidv4(),
           weight: re.target_weight ? parseFloat(re.target_weight) : null,
@@ -98,31 +130,31 @@ export const useRecordStore = create<RecordState>()((set) => ({
     }),
 
   addExercise: (exercise) =>
-    set((state) => {
-      if (state.exercises.some((e) => e.exercise_id === exercise.exercise_id)) {
-        return state;
-      }
-      return {
-        exercises: [
-          ...state.exercises,
-          {
-            id: uuidv4(),
-            exercise_id: exercise.exercise_id,
-            name: exercise.name,
-            rest_seconds: 90,
-            sets: [
-              {
-                id: uuidv4(),
-                weight: null,
-                reps: 10,
-                is_warmup: false,
-                rpe: null,
-              },
-            ],
-          },
-        ],
-      };
-    }),
+    set((state) => ({
+      exercises: [
+        ...state.exercises,
+        {
+          id: uuidv4(),
+          exercise_id: exercise.exercise_id,
+          name: exercise.name,
+          rest_seconds: 90,
+          equipment_used: exercise.default_equipment ?? null,
+          is_unilateral: exercise.default_unilateral ?? false,
+          available_equipment: exercise.available_equipment ?? null,
+          supports_unilateral: exercise.supports_unilateral ?? false,
+          category: exercise.category ?? '',
+          sets: [
+            {
+              id: uuidv4(),
+              weight: null,
+              reps: 10,
+              is_warmup: false,
+              rpe: null,
+            },
+          ],
+        },
+      ],
+    })),
 
   removeExercise: (exerciseClientId) =>
     set((state) => ({
@@ -183,6 +215,20 @@ export const useRecordStore = create<RecordState>()((set) => ({
       }),
     })),
 
+  updateExerciseEquipment: (exerciseClientId, equipment) =>
+    set((state) => ({
+      exercises: state.exercises.map((e) =>
+        e.id === exerciseClientId ? { ...e, equipment_used: equipment } : e
+      ),
+    })),
+
+  toggleExerciseUnilateral: (exerciseClientId) =>
+    set((state) => ({
+      exercises: state.exercises.map((e) =>
+        e.id === exerciseClientId ? { ...e, is_unilateral: !e.is_unilateral } : e
+      ),
+    })),
+
   loadFromSession: (session) =>
     set({
       isEditing: true,
@@ -193,6 +239,11 @@ export const useRecordStore = create<RecordState>()((set) => ({
         exercise_id: ex.exercise_id,
         name: ex.name,
         rest_seconds: 90,
+        equipment_used: ex.equipment_used ?? null,
+        is_unilateral: ex.is_unilateral ?? false,
+        available_equipment: ex.available_equipment ?? null,
+        supports_unilateral: ex.supports_unilateral ?? false,
+        category: ex.category ?? '',
         sets: ex.sets.map((s) => ({
           id: uuidv4(),
           weight: s.weight,

@@ -26,6 +26,10 @@ interface RoutineExercise {
     name_ko: string;
     name_en: string | null;
     category: string;
+    available_equipment: string[] | null;
+    default_equipment: string | null;
+    supports_unilateral: boolean | null;
+    default_unilateral: boolean | null;
   };
 }
 

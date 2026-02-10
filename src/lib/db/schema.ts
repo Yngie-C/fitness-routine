@@ -43,6 +43,10 @@ export const exercises = pgTable('exercises', {
   is_custom: boolean('is_custom').default(false),
   created_by: uuid('created_by').references(() => profiles.id),
   created_at: timestamp('created_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+  available_equipment: jsonb('available_equipment'),
+  default_equipment: text('default_equipment'),
+  supports_unilateral: boolean('supports_unilateral').default(false),
+  default_unilateral: boolean('default_unilateral').default(false),
 });
 
 // Routines table
@@ -119,6 +123,8 @@ export const workout_sets = pgTable('workout_sets', {
   client_id: uuid('client_id').unique(),
   client_updated_at: timestamp('client_updated_at', { withTimezone: true, mode: 'string' }),
   completed_at: timestamp('completed_at', { withTimezone: true, mode: 'string' }).defaultNow(),
+  equipment_used: text('equipment_used'),
+  is_unilateral: boolean('is_unilateral').default(false),
 });
 
 // Relations

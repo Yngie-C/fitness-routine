@@ -16,6 +16,10 @@ interface ExerciseData {
   name_ko: string;
   name_en: string | null;
   category: string;
+  available_equipment: string[] | null;
+  default_equipment: string | null;
+  supports_unilateral: boolean | null;
+  default_unilateral: boolean | null;
 }
 
 interface WorkoutSetData {
@@ -27,6 +31,8 @@ interface WorkoutSetData {
   is_warmup: boolean;
   is_pr: boolean;
   rpe: number | null;
+  equipment_used: string | null;
+  is_unilateral: boolean | null;
   exercise: ExerciseData;
 }
 
@@ -97,6 +103,11 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
         target_reps: re.target_reps,
         target_weight: re.target_weight,
         rest_seconds: re.rest_seconds,
+        available_equipment: re.exercise.available_equipment as string[] | null,
+        default_equipment: re.exercise.default_equipment,
+        supports_unilateral: re.exercise.supports_unilateral ?? false,
+        default_unilateral: re.exercise.default_unilateral ?? false,
+        category: re.exercise.category,
       }))
     );
   };
@@ -106,6 +117,11 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
     const exerciseMap = new Map<string, {
       exercise_id: string;
       name: string;
+      equipment_used?: string | null;
+      is_unilateral?: boolean;
+      available_equipment?: string[] | null;
+      supports_unilateral?: boolean;
+      category?: string;
       sets: Array<{ weight: number | null; reps: number; is_warmup: boolean; rpe: number | null }>;
     }>();
 
@@ -114,6 +130,11 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
         exerciseMap.set(ws.exercise_id, {
           exercise_id: ws.exercise_id,
           name: ws.exercise.name_ko,
+          equipment_used: ws.equipment_used ?? undefined,
+          is_unilateral: ws.is_unilateral ?? undefined,
+          available_equipment: ws.exercise.available_equipment as string[] | null,
+          supports_unilateral: ws.exercise.supports_unilateral ?? false,
+          category: ws.exercise.category,
           sets: [],
         });
       }
@@ -137,7 +158,15 @@ export function RecordDateClient({ date, formattedDate, existingSessions, userRo
       (ex) => !exercises.some((e) => e.exercise_id === ex.id)
     );
     newExercises.forEach((ex) => {
-      addExercise({ exercise_id: ex.id, name: ex.name_ko });
+      addExercise({
+        exercise_id: ex.id,
+        name: ex.name_ko,
+        available_equipment: ex.available_equipment as string[] | null,
+        default_equipment: ex.default_equipment,
+        supports_unilateral: ex.supports_unilateral ?? false,
+        default_unilateral: ex.default_unilateral ?? false,
+        category: ex.category,
+      });
     });
   };
 

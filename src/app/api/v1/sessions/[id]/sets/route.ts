@@ -47,7 +47,7 @@ export async function POST(
       );
     }
 
-    const { exercise_id, set_number, weight, reps, is_warmup } =
+    const { exercise_id, set_number, weight, reps, is_warmup, equipment_used, is_unilateral } =
       validation.data;
 
     // Create set
@@ -60,6 +60,8 @@ export async function POST(
         weight,
         reps,
         is_warmup,
+        equipment_used: equipment_used ?? null,
+        is_unilateral: is_unilateral ?? false,
       })
       .returning();
 

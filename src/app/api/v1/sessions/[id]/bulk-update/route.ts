@@ -65,6 +65,8 @@ export async function PUT(
           is_warmup: s.is_warmup ?? false,
           rpe: s.rpe ?? null,
           completed_at: new Date().toISOString(),
+          equipment_used: exercise.equipment_used ?? null,
+          is_unilateral: exercise.is_unilateral ?? false,
         }))
       );
 

@@ -36,7 +36,7 @@ export function ExerciseSelector({
 }: ExerciseSelectorProps) {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(selectedExerciseIds));
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ExerciseCategory | 'all'>('all');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,13 +44,13 @@ export function ExerciseSelector({
   useEffect(() => {
     if (open) {
       fetchExercises();
-      setSelectedIds(new Set(selectedExerciseIds));
+      setSelectedIds(new Set());
     }
   }, [open]);
 
   useEffect(() => {
     filterExercises();
-  }, [exercises, searchQuery, categoryFilter]);
+  }, [exercises, searchQuery, categoryFilter, selectedExerciseIds]);
 
   const fetchExercises = async () => {
     setIsLoading(true);
@@ -71,6 +71,10 @@ export function ExerciseSelector({
 
   const filterExercises = () => {
     let filtered = exercises;
+
+    // Exclude already added exercises
+    const excludeIds = new Set(selectedExerciseIds);
+    filtered = filtered.filter((ex) => !excludeIds.has(ex.id));
 
     // Category filter
     if (categoryFilter !== 'all') {

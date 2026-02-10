@@ -45,6 +45,8 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
     removeSet,
     updateSet,
     reorderExercises,
+    updateExerciseEquipment,
+    toggleExerciseUnilateral,
     reset,
   } = useRecordStore();
 
@@ -66,11 +68,16 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
   };
 
   const handleAddExercises = (selected: Exercise[]) => {
-    const newExercises = selected.filter(
-      (ex) => !exercises.some((e) => e.exercise_id === ex.id)
-    );
-    newExercises.forEach((ex) => {
-      addExercise({ exercise_id: ex.id, name: ex.name_ko });
+    selected.forEach((ex) => {
+      addExercise({
+        exercise_id: ex.id,
+        name: ex.name_ko,
+        available_equipment: ex.available_equipment as string[] | null,
+        default_equipment: ex.default_equipment,
+        supports_unilateral: ex.supports_unilateral ?? false,
+        default_unilateral: ex.default_unilateral ?? false,
+        category: ex.category,
+      });
     });
   };
 
@@ -104,6 +111,8 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
           body: JSON.stringify({
             exercises: exercises.map((ex) => ({
               exercise_id: ex.exercise_id,
+              equipment_used: ex.equipment_used,
+              is_unilateral: ex.is_unilateral,
               sets: ex.sets.map((s, i) => ({
                 set_number: i + 1,
                 weight: s.weight,
@@ -154,6 +163,8 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
                 reps: s.reps,
                 is_warmup: s.is_warmup,
                 rpe: s.rpe,
+                equipment_used: exercise.equipment_used,
+                is_unilateral: exercise.is_unilateral,
               }),
             });
             if (!setRes.ok) {
@@ -242,6 +253,9 @@ export function WorkoutLogForm({ date }: WorkoutLogFormProps) {
               onRemoveSet={(setId) => removeSet(exercise.id, setId)}
               onUpdateSet={(setId, data) => updateSet(exercise.id, setId, data)}
               onRemoveExercise={() => removeExercise(exercise.id)}
+              onDuplicateExercise={() => addExercise({ exercise_id: exercise.exercise_id, name: exercise.name, available_equipment: exercise.available_equipment, default_equipment: exercise.equipment_used, supports_unilateral: exercise.supports_unilateral, default_unilateral: exercise.is_unilateral, category: exercise.category })}
+              onEquipmentChange={(eq) => updateExerciseEquipment(exercise.id, eq)}
+              onUnilateralToggle={() => toggleExerciseUnilateral(exercise.id)}
             />
           ))}
         </SortableContext>
